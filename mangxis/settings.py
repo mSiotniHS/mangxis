@@ -18,6 +18,7 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS')
 
 INSTALLED_APPS = [
     'core.apps.CoreConfig',
+    'web_app.apps.WebAppConfig',
     'django_htmx',
     'django.contrib.admin',
     'django.contrib.auth',
