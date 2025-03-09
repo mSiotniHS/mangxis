@@ -1,0 +1,94 @@
+services:
+  init:
+    build: .
+    depends_on:
+      - database
+    env_file:
+      - .env
+    volumes:
+      - staticfiles:/app/staticfiles
+      - mediafiles:/app/mediafiles
+    command: >
+      bash -c "
+      uv run --no-dev manage.py collectstatic --no-input &&
+      uv run --no-dev manage.py migrate"
+    restart: "no"
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "4"
+
+  server:
+    build: .
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    volumes:
+      - staticfiles:/app/staticfiles
+      - mediafiles:/app/mediafiles
+    command: uv run --no-dev gunicorn mangxis.wsgi:application --bind 0.0.0.0:8000 --reload
+    ports:
+      - "8020:8000"
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "4"
+    restart: "unless-stopped"
+    develop:
+      watch:
+        - action: sync
+          path: ./core
+          target: /app/core
+        - action: sync
+          path: ./infrastructure
+          target: /app/infrastructure
+        - action: sync
+          path: ./mangxis
+          target: /app/mangxis
+        - action: sync
+          path: ./web_app
+          target: /app/web_app
+        - action: rebuild
+          path: pyproject.toml
+
+  database:
+    image: postgres:16.4
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: "${DATABASE_NAME}"
+      POSTGRES_USER: "${DATABASE_USER}"
+      POSTGRES_PASSWORD: "${DATABASE_PASSWORD}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready --username=${DATABASE_USER} --dbname=${DATABASE_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: "unless-stopped"
+    ports:
+      - "5432:5432"
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - staticfiles:/app/staticfiles
+      - mediafiles:/app/mediafiles
+      - ./.deploy/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8010:8010"
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "4"
+    restart: "unless-stopped"
+
+volumes:
+  postgres_data:
+  staticfiles:
+  mediafiles:

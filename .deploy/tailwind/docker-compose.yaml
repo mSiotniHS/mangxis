@@ -1,0 +1,12 @@
+services:
+  tailwind:
+    build: .
+    volumes:
+      - ./src:/app/src
+      - ../../web_app/templates:/app/templates
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ../../web_app/static/tailwind.css:/app/output/tailwind.css
+    command: npx @tailwindcss/cli -i ./src/input.css -o ./output/tailwind.css --watch
+    logging:
+      driver: "local"
+    tty: true
