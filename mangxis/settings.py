@@ -17,6 +17,7 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS')
 
 INSTALLED_APPS = [
+    'core.apps.CoreConfig',
     'django_htmx',
     'django.contrib.admin',
     'django.contrib.auth',
